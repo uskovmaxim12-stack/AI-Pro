@@ -3,80 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Assistant · Telegram Mini App</title>
+    <title>AI Assistant · Light & Smart</title>
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!-- Transformers.js -->
     <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.14.0"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        /* Стили как в предыдущей версии, но можно оставить те же */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: var(--tg-theme-secondary-bg-color, #1a1a2e);
+            background: var(--tg-theme-secondary-bg-color, #0a0f1e);
             color: var(--tg-theme-text-color, #e0e0e0);
             height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
-
-        /* Шапка */
         .header {
             padding: 16px 20px;
-            background: var(--tg-theme-bg-color, #16213e);
+            background: var(--tg-theme-bg-color, #121828);
             backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             display: flex;
             align-items: center;
             gap: 12px;
             z-index: 10;
         }
-
         .header h1 {
             font-size: 20px;
             font-weight: 600;
-            letter-spacing: 0.3px;
-            color: var(--tg-theme-text-color, #ffffff);
+            color: var(--tg-theme-text-color, #fff);
         }
-
-        .header .status {
+        .status {
             margin-left: auto;
             font-size: 14px;
             padding: 6px 12px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255,255,255,0.1);
             border-radius: 30px;
-            color: var(--tg-theme-hint-color, #aaa);
             display: flex;
             align-items: center;
             gap: 6px;
         }
-
-        .status .dot {
+        .dot {
             width: 10px;
             height: 10px;
             border-radius: 50%;
             background: #4caf50;
             box-shadow: 0 0 8px #4caf50;
         }
-
-        .status .dot.loading {
-            background: #ff9800;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        /* Контейнер сообщений */
+        .dot.loading { background: #ff9800; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.2); } 100% { opacity:1; transform:scale(1); } }
         #chat-container {
             flex: 1;
             overflow-y: auto;
@@ -85,232 +62,117 @@
             flex-direction: column;
             gap: 18px;
             scroll-behavior: smooth;
-            background: linear-gradient(145deg, var(--tg-theme-secondary-bg-color, #0f0f1a) 0%, var(--tg-theme-bg-color, #1a1a2e) 100%);
+            background: linear-gradient(145deg, var(--tg-theme-secondary-bg-color, #0a0f1e) 0%, var(--tg-theme-bg-color, #121828) 100%);
         }
-
-        /* Облако сообщения */
         .message-wrapper {
             display: flex;
             align-items: flex-end;
             gap: 8px;
             max-width: 85%;
         }
-
-        .message-wrapper.user {
-            margin-left: auto;
-            flex-direction: row-reverse;
-        }
-
+        .message-wrapper.user { margin-left: auto; flex-direction: row-reverse; }
         .avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
+            width: 36px; height: 36px; border-radius: 50%;
             background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            color: white;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             flex-shrink: 0;
         }
-
-        .avatar.user {
-            background: linear-gradient(135deg, #f093fb, #f5576c);
-        }
-
+        .avatar.user { background: linear-gradient(135deg, #f093fb, #f5576c); }
         .message-bubble {
-            padding: 14px 18px;
-            border-radius: 22px;
-            font-size: 15px;
-            line-height: 1.5;
-            word-wrap: break-word;
-            white-space: pre-wrap;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            position: relative;
-            transition: transform 0.2s;
+            padding: 14px 18px; border-radius: 22px; font-size: 15px; line-height: 1.5;
+            word-wrap: break-word; white-space: pre-wrap; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-
         .message-wrapper.bot .message-bubble {
-            background: var(--tg-theme-bg-color, #16213e);
+            background: var(--tg-theme-bg-color, #1e2639);
             border-bottom-left-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255,255,255,0.05);
         }
-
         .message-wrapper.user .message-bubble {
-            background: var(--tg-theme-button-color, #4a6fa5);
+            background: var(--tg-theme-button-color, #4f6f8f);
             color: var(--tg-theme-button-text-color, #ffffff);
             border-bottom-right-radius: 4px;
         }
-
-        /* Индикатор печати */
         .typing-indicator {
-            background: var(--tg-theme-bg-color, #16213e);
-            padding: 12px 18px;
-            border-radius: 22px;
-            border-bottom-left-radius: 4px;
-            display: flex;
-            gap: 6px;
-            align-items: center;
-            width: fit-content;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: var(--tg-theme-bg-color, #1e2639); padding: 12px 18px; border-radius: 22px;
+            border-bottom-left-radius: 4px; display: flex; gap: 6px; width: fit-content;
+            border: 1px solid rgba(255,255,255,0.05);
         }
-
         .typing-indicator span {
-            width: 10px;
-            height: 10px;
-            background: var(--tg-theme-hint-color, #aaa);
-            border-radius: 50%;
-            animation: typingBounce 1.4s infinite;
+            width: 10px; height: 10px; background: var(--tg-theme-hint-color, #aaa);
+            border-radius: 50%; animation: typingBounce 1.4s infinite;
         }
-
         .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
         .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes typingBounce {
-            0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
-            30% { transform: translateY(-8px); opacity: 1; }
-        }
-
-        /* Поле ввода */
+        @keyframes typingBounce { 0%,60%,100% { transform: translateY(0); opacity: 0.6; } 30% { transform: translateY(-8px); opacity: 1; } }
         .input-area {
-            background: var(--tg-theme-bg-color, #16213e);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 16px 20px;
-            display: flex;
-            gap: 12px;
+            background: var(--tg-theme-bg-color, #121828);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding: 16px 20px; display: flex; gap: 12px;
             backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
         }
-
         #message-input {
-            flex: 1;
-            padding: 14px 20px;
-            border: none;
-            border-radius: 40px;
-            background: var(--tg-theme-secondary-bg-color, #0f0f1a);
-            color: var(--tg-theme-text-color, #e0e0e0);
-            font-size: 16px;
-            outline: 2px solid transparent;
-            transition: outline 0.2s, background 0.2s;
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+            flex: 1; padding: 14px 20px; border: none; border-radius: 40px;
+            background: var(--tg-theme-secondary-bg-color, #0a0f1e);
+            color: var(--tg-theme-text-color, #e0e0e0); font-size: 16px;
+            outline: 2px solid transparent; transition: 0.2s;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
         }
-
-        #message-input:focus {
-            outline: 2px solid var(--tg-theme-button-color, #4a6fa5);
-            background: var(--tg-theme-bg-color, #16213e);
-        }
-
-        #message-input:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
+        #message-input:focus { outline: 2px solid var(--tg-theme-button-color, #4f6f8f); }
+        #message-input:disabled { opacity: 0.6; cursor: not-allowed; }
         #send-button {
-            width: 54px;
-            height: 54px;
-            border: none;
-            border-radius: 50%;
-            background: var(--tg-theme-button-color, #4a6fa5);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            font-size: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.2s, opacity 0.2s;
-            box-shadow: 0 6px 15px rgba(74, 111, 165, 0.4);
+            width: 54px; height: 54px; border: none; border-radius: 50%;
+            background: var(--tg-theme-button-color, #4f6f8f);
+            color: var(--tg-theme-button-text-color, #fff); font-size: 22px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; box-shadow: 0 6px 15px rgba(79,111,143,0.4);
         }
-
-        #send-button:hover {
-            transform: scale(1.05);
-        }
-
-        #send-button:active {
-            transform: scale(0.95);
-        }
-
-        #send-button:disabled {
-            opacity: 0.5;
-            transform: none;
-            box-shadow: none;
-            cursor: not-allowed;
-        }
-
-        /* Загрузочный экран */
+        #send-button:hover { transform: scale(1.05); }
+        #send-button:active { transform: scale(0.95); }
+        #send-button:disabled { opacity: 0.5; transform: none; box-shadow: none; cursor: not-allowed; }
         #loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--tg-theme-secondary-bg-color, #1a1a2e);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 25px;
-            z-index: 1000;
-            transition: opacity 0.5s;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--tg-theme-secondary-bg-color, #0a0f1e);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 25px; z-index: 1000; transition: opacity 0.5s;
         }
-
-        #loading-overlay.hidden {
-            opacity: 0;
-            pointer-events: none;
+        #loading-overlay.hidden { opacity: 0; pointer-events: none; }
+        .loader { width: 70px; height: 70px; border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--tg-theme-button-color, #4f6f8f); border-radius: 50%; animation: spin 1s infinite linear; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #loading-text { font-size: 18px; color: var(--tg-theme-hint-color, #aaa); max-width: 80%; text-align: center; }
+        #progress-bar {
+            width: 80%; height: 8px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden;
         }
-
-        .loader {
-            width: 70px;
-            height: 70px;
-            border: 5px solid rgba(255, 255, 255, 0.1);
-            border-top-color: var(--tg-theme-button-color, #4a6fa5);
-            border-radius: 50%;
-            animation: spin 1s infinite linear;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        #loading-text {
-            font-size: 18px;
-            color: var(--tg-theme-hint-color, #aaa);
-            max-width: 80%;
-            text-align: center;
+        #progress-fill {
+            height: 100%; width: 0%; background: var(--tg-theme-button-color, #4f6f8f); transition: width 0.3s;
         }
     </style>
 </head>
 <body>
-    <!-- Оверлей загрузки -->
     <div id="loading-overlay">
         <div class="loader"></div>
-        <div id="loading-text">⏳ Загрузка нейросети (GPT-2)...</div>
+        <div id="loading-text">⏳ Подготовка модели LaMini...</div>
+        <div id="progress-bar"><div id="progress-fill"></div></div>
     </div>
 
-    <!-- Шапка -->
     <div class="header">
-        <div class="avatar">
-            🤖
-        </div>
-        <h1>AI Assistant</h1>
+        <div class="avatar">🤖</div>
+        <h1>AI Light</h1>
         <div class="status" id="status">
-            <span class="dot" id="status-dot"></span>
+            <span class="dot loading" id="status-dot"></span>
             <span id="status-text">Загрузка...</span>
         </div>
     </div>
 
-    <!-- Чат -->
     <div id="chat-container"></div>
 
-    <!-- Ввод -->
     <div class="input-area">
-        <input type="text" id="message-input" placeholder="Сообщение..." disabled>
+        <input type="text" id="message-input" placeholder="Спроси что-нибудь..." disabled>
         <button id="send-button" disabled>➤</button>
     </div>
 
     <script>
         (async function() {
-            // Инициализация Telegram
             const tg = window.Telegram.WebApp;
             tg.ready();
             tg.expand();
@@ -321,17 +183,15 @@
             const sendButton = document.getElementById('send-button');
             const loadingOverlay = document.getElementById('loading-overlay');
             const loadingText = document.getElementById('loading-text');
+            const progressFill = document.getElementById('progress-fill');
             const statusDot = document.getElementById('status-dot');
             const statusText = document.getElementById('status-text');
 
-            // Состояние
-            let model = null;
-            let tokenizer = null;
             let generator = null;
             let isGenerating = false;
-            const conversationHistory = [];
+            const conversationHistory = []; // для контекста (храним последние N сообщений)
 
-            // Вспомогательные функции
+            // Хелперы
             function updateStatus(text, isReady = false) {
                 statusText.textContent = text;
                 statusDot.className = 'dot' + (isReady ? '' : ' loading');
@@ -340,15 +200,12 @@
             function addMessage(text, sender) {
                 const wrapper = document.createElement('div');
                 wrapper.className = `message-wrapper ${sender}`;
-
                 const avatar = document.createElement('div');
                 avatar.className = `avatar ${sender}`;
                 avatar.textContent = sender === 'user' ? '👤' : '🤖';
-
                 const bubble = document.createElement('div');
                 bubble.className = 'message-bubble';
                 bubble.textContent = text;
-
                 wrapper.appendChild(avatar);
                 wrapper.appendChild(bubble);
                 chatContainer.appendChild(wrapper);
@@ -359,15 +216,12 @@
                 const wrapper = document.createElement('div');
                 wrapper.className = 'message-wrapper bot';
                 wrapper.id = 'typing-wrapper';
-
                 const avatar = document.createElement('div');
                 avatar.className = 'avatar bot';
                 avatar.textContent = '🤖';
-
                 const indicator = document.createElement('div');
                 indicator.className = 'typing-indicator';
                 indicator.innerHTML = '<span></span><span></span><span></span>';
-
                 wrapper.appendChild(avatar);
                 wrapper.appendChild(indicator);
                 chatContainer.appendChild(wrapper);
@@ -379,32 +233,37 @@
                 if (typing) typing.remove();
             }
 
-            // Загрузка модели GPT-2 (quantized)
+            // Загрузка модели LaMini-Flan-T5-77M с отслеживанием прогресса
             async function loadModel() {
                 try {
                     updateStatus('Загрузка модели...');
-                    loadingText.textContent = '⏳ Инициализация GPT-2 (примерно 30 секунд)...';
+                    loadingText.textContent = '⏳ Инициализация LaMini (77M)...';
+                    
+                    // Используем pipeline для text2text-generation
+                    // Transformers.js поддерживает события прогресса через параметр `progress_callback`
+                    const progressCallback = (progress) => {
+                        if (progress.status === 'progress' && progress.total) {
+                            const percent = (progress.loaded / progress.total) * 100;
+                            progressFill.style.width = percent + '%';
+                            loadingText.textContent = `⏳ Загрузка: ${Math.round(percent)}%`;
+                        }
+                    };
 
-                    generator = await Transformers.pipeline('text-generation', 'Xenova/gpt2', {
-                        quantized: true,
+                    generator = await Transformers.pipeline('text2text-generation', 'Xenova/LaMini-Flan-T5-77M', {
+                        quantized: true,          // используем int8 для уменьшения размера
+                        progress_callback: progressCallback,
                     });
 
-                    model = generator.model;
-                    tokenizer = generator.tokenizer;
-
                     loadingOverlay.classList.add('hidden');
-                    updateStatus('Готов к работе', true);
-                    
-                    // Активируем интерфейс
+                    updateStatus('Готов', true);
                     inputField.disabled = false;
                     sendButton.disabled = false;
                     inputField.focus();
 
-                    // Приветствие
-                    addMessage('Привет! Я нейросеть GPT-2. Задавай вопросы, я постараюсь ответить.', 'bot');
+                    addMessage('Привет! Я лёгкая и быстрая нейросеть LaMini. Задавай вопросы!', 'bot');
                 } catch (error) {
                     console.error('Ошибка загрузки:', error);
-                    loadingText.textContent = '❌ Не удалось загрузить модель. Проверьте интернет и обновите страницу.';
+                    loadingText.innerHTML = '❌ Не удалось загрузить модель.<br>Проверьте интернет или обновите страницу.';
                     updateStatus('Ошибка');
                 }
             }
@@ -417,36 +276,32 @@
                 inputField.disabled = true;
                 updateStatus('Думаю...');
 
-                // Добавляем сообщение пользователя
                 conversationHistory.push({ role: 'user', content: userMessage });
                 addMessage(userMessage, 'user');
 
-                // Формируем промпт (простой, так как GPT-2 не обучен для чата, но для демо сойдёт)
-                // Можно использовать просто последние несколько сообщений
-                const prompt = conversationHistory.map(m => m.role === 'user' ? `User: ${m.content}` : `AI: ${m.content}`).join('\n') + '\nAI:';
-                
+                // Формируем промпт: для Flan-T5 лучше простой вопрос без сложных шаблонов
+                // Но можно добавить немного контекста (последние 2-3 обмена)
+                let prompt = userMessage;
+                if (conversationHistory.length > 1) {
+                    // Берём последние 3 сообщения для контекста
+                    const recent = conversationHistory.slice(-6); // 3 пары user/assistant
+                    prompt = recent.map(m => m.role === 'user' ? `Вопрос: ${m.content}` : `Ответ: ${m.content}`).join('\n') + '\nВопрос: ' + userMessage + '\nОтвет:';
+                } else {
+                    prompt = `Вопрос: ${userMessage}\nОтвет:`;
+                }
+
                 showTyping();
 
                 try {
+                    // Для text2text-generation используем max_new_tokens
                     const result = await generator(prompt, {
-                        max_new_tokens: 100,
+                        max_new_tokens: 150,
                         temperature: 0.8,
                         top_p: 0.9,
                         do_sample: true,
-                        pad_token_id: tokenizer.eos_token_id,
                     });
 
-                    const fullText = result[0].generated_text;
-                    // Извлекаем только ответ после последнего "AI:"
-                    const lastAiIndex = fullText.lastIndexOf('AI:');
-                    let reply = lastAiIndex !== -1 ? fullText.substring(lastAiIndex + 3).trim() : fullText;
-                    
-                    // Обрезаем если есть следующий User
-                    const nextUserIndex = reply.indexOf('User:');
-                    if (nextUserIndex !== -1) reply = reply.substring(0, nextUserIndex).trim();
-                    
-                    if (!reply) reply = '...';
-
+                    const reply = result[0].generated_text.trim();
                     conversationHistory.push({ role: 'assistant', content: reply });
                     
                     removeTyping();
@@ -459,17 +314,17 @@
                     isGenerating = false;
                     sendButton.disabled = false;
                     inputField.disabled = false;
-                    updateStatus('Готов к работе', true);
+                    updateStatus('Готов', true);
                     inputField.focus();
                 }
             }
 
             // Обработчики
             sendButton.addEventListener('click', () => {
-                const message = inputField.value.trim();
-                if (message && !isGenerating) {
+                const msg = inputField.value.trim();
+                if (msg && !isGenerating) {
                     inputField.value = '';
-                    generateResponse(message);
+                    generateResponse(msg);
                 }
             });
 
@@ -480,7 +335,7 @@
                 }
             });
 
-            // Запуск
+            // Старт
             loadModel();
         })();
     </script>
